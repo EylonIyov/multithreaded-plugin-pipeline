@@ -228,16 +228,23 @@ void test_stress()
 
 void main()
 {
-    printf("MAIN: TESTING NOW\n");
-    printf("TEST 1: Multiple threads basic test\n");
-    test_multiple_threads();
-    printf("TEST 2: Manual reset test\n");
+    printf("=== Monitor Test Suite ===\n\n");
+
+    printf("Test 1: Basic Signal\n");
+    test_basic_signal();
+
+    printf("\nTest 2: Manual Reset\n");
     test_manual_reset();
-    // printf("TEST 3: Test multiple waiters");
-    // test_multiple_waiters();
-    printf("TEST 4: Race condition test\n");
+
+    printf("\nTest 3: Multiple Waiters\n");
+    test_multiple_waiters();
+
+    printf("\nTest 4: Race Condition\n");
     test_race_condition();
-    printf("TEST 5: Stress Test\n");
+
+    printf("\nTest 5: Stress Test\n");
     test_stress();
-    printf("MAIN: ALL TESTS PASSED FOR MONITOR");
+
+    printf("\n=== All Tests Passed ===\n");
+    return 0;
 }
