@@ -5,11 +5,12 @@
 
 typedef struct
 {
-    char **items;                /* Array of string pointers */
-    int capacity;                /* Maximum number of items */
-    int count;                   /* Current number of items */
-    int head;                    /* Index of first item */
-    int tail;                    /* Index of next insertion point */
+    char **items; /* Array of string pointers */
+    int capacity; /* Maximum number of items */
+    int count;    /* Current number of items */
+    int head;     /* Index of first item */
+    int tail;     /* Index of next insertion point */
+    pthread_mutex_t queue_lock;
     monitor_t not_full_monitor;  /* Monitor for "not full" state */
     monitor_t not_empty_monitor; /* Monitor for "not empty" state */
     monitor_t finished_monitor;  /* Monitor for finished signal */
@@ -36,8 +37,7 @@ void consumer_producer_destroy(consumer_producer_t *queue);
  * @param item String to add (queue takes ownership)
  * @return NULL on success, error message on failure
  */
-const char *consumer_producer_put(consumer_producer_t *queue, const char *
-                                                                  item);
+const char *consumer_producer_put(consumer_producer_t *queue, const char *item);
 
 /**
  * Remove an item from the queue (consumer) and returns it.
