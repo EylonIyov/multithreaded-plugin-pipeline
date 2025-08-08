@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "type_traits": "c",
+        "stdatomic.h": "c",
+        "sigaction.h": "c",
+        "uthreads.h": "c",
+        "atomic": "c",
+        "stdlib.h": "c",
+        "unistd.h": "c"
+    }
+}
