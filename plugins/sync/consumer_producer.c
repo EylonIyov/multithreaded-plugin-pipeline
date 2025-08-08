@@ -73,10 +73,29 @@ const char *consumer_producer_put(consumer_producer_t *queue, const char *item)
         return "NULL Item pointer";
     }
 
+    pthread_mutex_lock(&queue->queue_lock);
+
     while (queue->count >= queue->capacity)
     {
+        monitor_reset(&queue->not_full_monitor);
+        pthread_mutex_unlock(&queue->queue_lock);
         monitor_wait(&queue->not_full_monitor);
+        pthread_mutex_lock(&queue->queue_lock);
     }
+
+    queue->items[queue->tail] = strdup(item);
+    if (queue->items[queue->tail] == NULL)
+    {
+        pthread_mutex_unlock(&queue->queue_lock);
+        return "Error: Memory allocation for string failed";
+    }
+
+    queue->tail = (queue->tail + 1) % queue->capacity;
+    queue->count++;
+
+    monitor_signal(&queue->not_empty_monitor);
+
+    pthread_mutex_unlock(&queue->queue_lock);
 
     return NULL;
 }
