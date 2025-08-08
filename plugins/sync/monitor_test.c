@@ -226,7 +226,7 @@ void test_stress()
     monitor_destroy(&monitor);
 }
 
-void main()
+int main()
 {
     printf("=== Monitor Test Suite ===\n\n");
 
