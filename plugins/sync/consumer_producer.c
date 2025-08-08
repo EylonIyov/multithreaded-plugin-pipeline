@@ -1,7 +1,5 @@
 #include "consumer_producer.h"
 
-pthread_mutex_t queue_lock;
-
 const char *consumer_producer_init(consumer_producer_t *queue, int capacity)
 {
     if (queue == NULL)
@@ -73,6 +71,11 @@ const char *consumer_producer_put(consumer_producer_t *queue, const char *item)
         return "NULL Item pointer";
     }
 
+    if (queue->finished_monitor.signaled == 1)
+    {
+        return "Can't add items after finish";
+    }
+
     pthread_mutex_lock(&queue->queue_lock);
 
     while (queue->count >= queue->capacity)
@@ -98,4 +101,52 @@ const char *consumer_producer_put(consumer_producer_t *queue, const char *item)
     pthread_mutex_unlock(&queue->queue_lock);
 
     return NULL;
+}
+
+char *consumer_producer_get(consumer_producer_t *queue)
+{
+
+    if (queue == NULL)
+    {
+        return "Error: NULL Queue pointer";
+    }
+
+    pthread_mutex_lock(&queue->queue_lock);
+
+    while (queue->count <= 0)
+    {
+        monitor_reset(&queue->not_empty_monitor);
+        pthread_mutex_unlock(&queue->queue_lock);
+        monitor_wait(&queue->not_empty_monitor);
+        pthread_mutex_lock(&queue->queue_lock);
+    }
+
+    char *returnVal = queue->items[queue->head];
+    queue->items[queue->head] = NULL;
+
+    queue->head = (queue->head + 1) % queue->capacity;
+    queue->count--;
+
+    monitor_signal(&queue->not_full_monitor);
+
+    pthread_mutex_unlock(&queue->queue_lock);
+
+    return returnVal;
+}
+
+void consumer_producer_signal_finished(consumer_producer_t *queue)
+{
+    if (queue == NULL)
+    {
+        return;
+    }
+
+    monitor_signal(&queue->finished_monitor);
+}
+
+int consumer_producer_wait_finished(consumer_producer_t *queue)
+{
+
+    while ()
+        return
 }
