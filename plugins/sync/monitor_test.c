@@ -231,7 +231,7 @@ void main()
     printf("=== Monitor Test Suite ===\n\n");
 
     printf("Test 1: Basic Signal\n");
-    test_basic_signal();
+    test_multiple_threads();
 
     printf("\nTest 2: Manual Reset\n");
     test_manual_reset();
