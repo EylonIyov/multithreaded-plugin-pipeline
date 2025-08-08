@@ -1,3 +1,5 @@
+#ifndef CONSUMER_PRODUCER_H_
+#define CONSUMER_PRODUCER_H_
 #include <pthread.h>
 #include "monitor.h"
 
@@ -57,3 +59,5 @@ void consumer_producer_signal_finished(consumer_producer_t *queue);
  * @return 0 on success, -1 on timeout
  */
 int consumer_producer_wait_finished(consumer_producer_t *queue);
+
+#endif
