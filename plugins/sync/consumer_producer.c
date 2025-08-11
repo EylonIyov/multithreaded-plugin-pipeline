@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "consumer_producer.h"
 
 const char *consumer_producer_init(consumer_producer_t *queue, int capacity)
@@ -10,6 +13,12 @@ const char *consumer_producer_init(consumer_producer_t *queue, int capacity)
     if (capacity <= 0)
     {
         return "Queue capacity can only be a positive number";
+    }
+
+    queue->items = malloc(capacity * sizeof(char *));
+    if (queue->items == NULL)
+    {
+        return "Failed to allocate memory for items array";
     }
 
     for (int i = 0; i < capacity; i++)
@@ -57,6 +66,7 @@ void consumer_producer_destroy(consumer_producer_t *queue)
     monitor_destroy(&queue->not_full_monitor);
     monitor_destroy(&queue->not_empty_monitor);
     pthread_mutex_destroy(&queue->queue_lock);
+    free(queue->items);
 }
 
 const char *consumer_producer_put(consumer_producer_t *queue, const char *item)
@@ -105,7 +115,6 @@ const char *consumer_producer_put(consumer_producer_t *queue, const char *item)
 
 char *consumer_producer_get(consumer_producer_t *queue)
 {
-
     if (queue == NULL)
     {
         return "Error: NULL Queue pointer";
@@ -113,12 +122,19 @@ char *consumer_producer_get(consumer_producer_t *queue)
 
     pthread_mutex_lock(&queue->queue_lock);
 
-    while (queue->count <= 0)
+    while (queue->count <= 0 && queue->finished_monitor.signaled == 0)
     {
         monitor_reset(&queue->not_empty_monitor);
         pthread_mutex_unlock(&queue->queue_lock);
         monitor_wait(&queue->not_empty_monitor);
         pthread_mutex_lock(&queue->queue_lock);
+    }
+
+    // If queue is empty and finished signal was sent, return NULL
+    if (queue->count <= 0 && queue->finished_monitor.signaled == 1)
+    {
+        pthread_mutex_unlock(&queue->queue_lock);
+        return NULL;
     }
 
     char *returnVal = queue->items[queue->head];
@@ -142,11 +158,16 @@ void consumer_producer_signal_finished(consumer_producer_t *queue)
     }
 
     monitor_signal(&queue->finished_monitor);
+    // Also signal not_empty_monitor to wake up any waiting consumers
+    monitor_signal(&queue->not_empty_monitor);
 }
 
 int consumer_producer_wait_finished(consumer_producer_t *queue)
 {
-
-    while ()
-        return
+    if (queue == NULL)
+    {
+        return -1;
+    }
+    monitor_wait(&queue->finished_monitor);
+    return 0;
 }
