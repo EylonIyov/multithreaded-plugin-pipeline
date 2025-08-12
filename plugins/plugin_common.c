@@ -1,7 +1,10 @@
 #include "plugin_common.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include <string.h>
+
+static plugin_context_t plugin_context;
 
 void *plugin_consumer_thread(void *arg)
 {
@@ -56,4 +59,65 @@ void log_error(plugin_context_t *context, const char *message)
 void log_info(plugin_context_t *context, const char *message)
 {
     printf("[INFO] %s - %s\n", context->name, message);
+}
+
+const char *common_plugin_init(const char *(*process_function)(const char *), const char *name, int queue_size)
+{
+
+    // Input validation
+    if (!process_function)
+    {
+        return "Process_function can't be NULL";
+    }
+    if (!name)
+    {
+        return "Plugin name cannot be NULL";
+    }
+
+    if (queue_size <= 0)
+    {
+        return "Queue size must be positive";
+    }
+
+    // Initialize the fields of the plugin
+    plugin_context.name = name;
+    plugin_context.process_function = process_function;
+    plugin_context.next_place_work = NULL;
+    plugin_context.initialized = 0;
+    plugin_context.finished = 0;
+
+    // Initialize a pointer for the plugins queue:
+    plugin_context.queue = malloc(sizeof(consumer_producer_t));
+    if (!plugin_context.queue)
+    {
+        return "Memory allocation for queue failed";
+    }
+
+    // Initiate the consumer_producer sync mechanism
+    const char *error = consumer_producer_init(plugin_context.queue, queue_size);
+    if (error)
+    {
+        free(plugin_context.queue);
+        plugin_context.queue = NULL;
+        return error;
+    }
+
+    // Create the consumer thread
+    int thread_output = pthread_create(&plugin_context.consumer_thread, NULL, plugin_consumer_thread, &plugin_context);
+    if (thread_output != 0)
+    { // Thread wasn't created properly, output of the function is 0
+        consumer_producer_destroy(plugin_context.queue);
+        free(plugin_context.queue);
+        plugin_context.queue = NULL;
+        return "Creating the consumer thread failed";
+    }
+
+    // Create a small delay for the plugin to initialize
+    while (!plugin_context.initialized)
+    {
+        usleep(500);
+    }
+
+    // If we reached here - success
+    return NULL;
 }
