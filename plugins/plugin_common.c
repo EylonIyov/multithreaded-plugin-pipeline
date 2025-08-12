@@ -26,7 +26,7 @@ void *plugin_consumer_thread(void *arg)
             break; // Consumer_producer_get will return NULL only when finished signal was recived
         }
 
-        if (strcmp(input, "<END>" == 0))
+        if (strcmp(input, "<END>") == 0)
         {
             if (context->next_place_work != NULL)
             {
@@ -59,6 +59,11 @@ void log_error(plugin_context_t *context, const char *message)
 void log_info(plugin_context_t *context, const char *message)
 {
     printf("[INFO] %s - %s\n", context->name, message);
+}
+
+const char *plugin_get_name(void)
+{
+    return plugin_context.name;
 }
 
 const char *common_plugin_init(const char *(*process_function)(const char *), const char *name, int queue_size)
@@ -120,4 +125,9 @@ const char *common_plugin_init(const char *(*process_function)(const char *), co
 
     // If we reached here - success
     return NULL;
+}
+const char *plugin_init(int queue_size)
+{
+
+    return NULL; // Success
 }
