@@ -18,10 +18,3 @@ const char *plugin_transform(const char *input)
     }
     return output;
 }
-
-__attribute__((visibility("default")))
-const char *
-plugin_init(int queue_size)
-{
-    return common_plugin_init((void *)plugin_transform, "uppercaser", queue_size);
-}
