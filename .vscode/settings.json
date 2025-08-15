@@ -9,6 +9,7 @@
         "unistd.h": "c",
         "pthread.h": "c",
         "monitor.h": "c",
-        "plugin_common.h": "c"
+        "plugin_common.h": "c",
+        "limits": "c"
     }
 }
