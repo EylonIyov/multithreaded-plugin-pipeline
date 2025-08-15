@@ -1,8 +1,8 @@
 #include "plugin_common.h"
-#include <stdio.h>  // for printf
-#include <string.h> // for strdup
-#include <unistd.h> // for usleep
-#include <stdlib.h> // for malloc/free
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 #define SECOND 100000
 
