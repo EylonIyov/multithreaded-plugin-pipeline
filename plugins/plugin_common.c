@@ -23,42 +23,56 @@ void *plugin_consumer_thread(void *arg)
 
         if (!input)
         {
+            context->finished = 1;
             break; // Consumer_producer_get will return NULL only when finished signal was recived
         }
 
         if (strcmp(input, "<END>") == 0)
         {
+            consumer_producer_signal_finished(context->queue);
+
             if (context->next_place_work != NULL)
             {
                 context->next_place_work(input);
             }
-            free(input);
             context->finished = 1;
+            free(input);
+
             break;
         }
 
         const char *output = context->process_function(input);
 
-        if (output == NULL && context->next_place_work != NULL)
-        {
-            context->next_place_work(input);
-        }
-        else if (output != NULL)
-        {
-            log_error(context, output);
-        }
         free(input);
+
+        if (output == NULL)
+        {
+            log_error(context, "Transformation of input failed");
+            continue;
+        }
+
+        if (context->next_place_work != NULL)
+        {
+            const char *error = context->next_place_work(output);
+            if (error != NULL)
+            {
+                log_error(context, error);
+            }
+        }
+        free((void *)output);
     }
+
+    return NULL;
 }
 
 void log_error(plugin_context_t *context, const char *message)
 {
-    printf("[ERROR] %s - %s\n", context->name, message);
+    fprintf(stderr, "[%s] %s\n", context->name, message);
 }
 
 void log_info(plugin_context_t *context, const char *message)
 {
-    printf("[INFO] %s - %s\n", context->name, message);
+    printf("[%s] %s\n", context->name, message);
 }
 
 const char *plugin_get_name(void)
@@ -117,17 +131,50 @@ const char *common_plugin_init(const char *(*process_function)(const char *), co
         return "Creating the consumer thread failed";
     }
 
-    // Create a small delay for the plugin to initialize
-    while (!plugin_context.initialized)
-    {
-        usleep(500);
-    }
-
     // If we reached here - success
     return NULL;
 }
+
+const char *plugin_fini(void)
+{
+    if (!plugin_context.queue)
+    {
+        return "Plugin not initialized yet";
+    }
+    // Destroy and free all resources
+    pthread_join(plugin_context.consumer_thread, NULL);
+    consumer_producer_destroy(plugin_context.queue);
+    free(plugin_context.queue);
+    plugin_context.queue = NULL;
+    return NULL;
+}
+
+const char *plugin_place_work(const char *str)
+{
+    if (!plugin_context.queue)
+    {
+        return "Plugin not initialized yet";
+    }
+    return consumer_producer_put(plugin_context.queue, str);
+}
+
+void plugin_attach(const char *(*next_place_work)(const char *))
+{
+    plugin_context.next_place_work = next_place_work;
+}
+
+__attribute__((visibility("default")))
+const char *
+plugin_wait_finished(void)
+{
+    if (!plugin_context.queue)
+    {
+        return "Plugin not initialized yet";
+    }
+    return consumer_producer_wait_finished(plugin_context.queue) == 0 ? NULL : "Waiting failed"; // Return an error message if waiting for finish failed
+}
+
 const char *plugin_init(int queue_size)
 {
-
-    return NULL; // Success
+    return common_plugin_init((void *)plugin_context.process_function, plugin_context.name, queue_size);
 }

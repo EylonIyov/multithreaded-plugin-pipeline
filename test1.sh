@@ -1,0 +1,1 @@
+gcc -fPIC -shared -o output/logger.so plugins/logger.c plugins/plugin_common.c plugins/sync/monitor.c plugins/sync/consumer_producer.c -ldl -lpthread || { print_error "Failed to build $plugin_name"; exit 1; }

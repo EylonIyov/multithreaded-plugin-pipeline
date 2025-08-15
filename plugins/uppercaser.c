@@ -1,4 +1,5 @@
 #include "plugin_common.h"
+#include <string.h>
 
 const char *plugin_transform(const char *input)
 {
