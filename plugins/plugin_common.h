@@ -2,7 +2,6 @@
 #define PLUGIN_COMMON_H
 #include "sync/consumer_producer.h"
 #include "sync/monitor.h"
-#include <pthread.h>
 
 // Plugin context structure
 typedef struct
@@ -39,8 +38,7 @@ void log_info(plugin_context_t *context, const char *message);
  * @return The plugin's name (should not be modified or freed)
  */
 __attribute__((visibility("default")))
-const char *
-plugin_get_name(void);
+const char *plugin_get_name(void);
 
 /**
  * Initialize the common plugin infrastructure with the specified queue size
@@ -59,16 +57,14 @@ common_plugin_init
 * @return NULL on success, error message on failure
 */
 __attribute__((visibility("default")))
-const char *
-plugin_init(int queue_size);
+const char *plugin_init(int queue_size);
 /**
 * Finalize the plugin - drain queue and terminate thread gracefully (i.e.
 pthread_join)
 * @return NULL on success, error message on failure
 */
 __attribute__((visibility("default")))
-const char *
-plugin_fini(void);
+const char *plugin_fini(void);
 /**
 * Place work (a string) into the plugin's queue
 * @param str The string to process (plugin takes ownership if it allocates
@@ -76,14 +72,14 @@ new memory)
 * @return NULL on success, error message on failure
 */
 __attribute__((visibility("default")))
-const char *
-plugin_place_work(const char *str);
+const char *plugin_place_work(const char *str);
 /**
 * Attach this plugin to the next plugin in the chain
 * @param next_place_work Function pointer to the next plugin's place_work
 function
 */
-__attribute__((visibility("default"))) void plugin_attach(const char *(*next_place_work)(const char *));
+__attribute__((visibility("default"))) 
+void plugin_attach(const char *(*next_place_work)(const char *));
 /**
 shutdown
 * Wait until the plugin has finished processing all work and is ready to
@@ -91,7 +87,6 @@ shutdown
 * @return NULL on success, error message on failure
 */
 __attribute__((visibility("default")))
-const char *
-plugin_wait_finished(void);
+const char* plugin_wait_finished(void);
 
 #endif

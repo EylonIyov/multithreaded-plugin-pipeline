@@ -63,11 +63,10 @@ int monitor_wait(monitor_t *monitor)
     {
         if (pthread_cond_wait(&(monitor->condition), &(monitor->mutex)) != 0)
         {
-
             pthread_mutex_unlock(&(monitor->mutex));
             return -1;
         }
-    }
+        }
     if (pthread_mutex_unlock(&(monitor->mutex)) != 0)
     {
         return -1;

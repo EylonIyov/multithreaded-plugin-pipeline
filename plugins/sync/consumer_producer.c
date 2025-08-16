@@ -130,7 +130,6 @@ char *consumer_producer_get(consumer_producer_t *queue)
         pthread_mutex_lock(&queue->queue_lock);
     }
 
-    // If queue is empty and finished signal was sent, return NULL
     if (queue->count <= 0 && queue->finished_monitor.signaled == 1)
     {
         pthread_mutex_unlock(&queue->queue_lock);
@@ -158,7 +157,6 @@ void consumer_producer_signal_finished(consumer_producer_t *queue)
     }
 
     monitor_signal(&queue->finished_monitor);
-    // Also signal not_empty_monitor to wake up any waiting consumers
     monitor_signal(&queue->not_empty_monitor);
 }
 
