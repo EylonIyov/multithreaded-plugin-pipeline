@@ -13,13 +13,15 @@ const char *plugin_transform(const char *input)
         return NULL;
 
     printf("[typewriter] ");
+    fflush(stdout);
     for (int i = 0; output[i]; i++)
     {
         usleep(SECOND);
-        printf("%c", output[i]);
+        putchar(output[i]);
+        fflush(stdout);
     }
-    printf("\n");
-    return output;
+    putchar('\n');
+    fflush(stdout);
 }
 __attribute__((visibility("default")))
 const char *

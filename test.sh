@@ -28,10 +28,15 @@ for plugin_name in logger uppercaser rotator flipper expander typewriter; do
     }    
 done
 
+print_status "Building analyzer"
+
 gcc -ldl main.c -o output/analyzer
 
 cd output
 
-./analyzer 20 logger typewriter
+print_status "Testing pipeline with multiple inputs"
+
+echo -e "hello\nworld\ntest input\nquick test\nmore data\n<END>" | ./analyzer 1 uppercaser logger rotator typewriter
+
 
 cd ../
