@@ -1,0 +1,1 @@
+gcc -ldl main.c -o output/analyzer

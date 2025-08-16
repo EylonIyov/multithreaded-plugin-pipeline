@@ -27,3 +27,11 @@ for plugin_name in logger uppercaser rotator flipper expander typewriter; do
         exit 1 
     }    
 done
+
+gcc -ldl main.c -o output/analyzer
+
+cd output
+
+./analyzer 20 logger typewriter
+
+cd ../
