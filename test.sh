@@ -36,7 +36,7 @@ cd output
 
 print_status "Testing pipeline with multiple inputs"
 
-echo -e "hello\nworld\ntest input\nquick test\nmore data\n<END>" | ./analyzer 1 uppercaser logger rotator typewriter
+echo -e "hello\nworld\ntest input\nquick test\nmore data\n<END>" | ./analyzer 3 uppercaser logger rotator typewriter
 
 
 cd ../

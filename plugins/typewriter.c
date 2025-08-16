@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#define SECOND 1000000u
+#define SECOND 500000u
 
 const char *plugin_transform(const char *input)
 {
@@ -22,7 +22,9 @@ const char *plugin_transform(const char *input)
     }
     putchar('\n');
     fflush(stdout);
+    return output;
 }
+
 __attribute__((visibility("default")))
 const char *
 plugin_init(int queue_size)
