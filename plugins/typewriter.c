@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#define SECOND 100000
+#define SECOND 1000000u
 
 const char *plugin_transform(const char *input)
 {
