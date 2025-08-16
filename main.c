@@ -69,16 +69,9 @@ int main(int argc, char *argv[])
             return -1;
         }
     }
-    // DEBUGGING
-    printf("[DEBUG] Testing direct plugin calls:\n");
-    const char *test_error = plugin_handles[0].place_work("test_input");
-    if (test_error)
+    for (int i = 0; i < g_pluginCount - 1; i++)
     {
-        printf("[ERROR] Direct call to %s failed: %s\n", plugin_handles[0].name, test_error);
-    }
-    else
-    {
-        printf("[DEBUG] Direct call to %s succeeded\n", plugin_handles[0].name);
+        plugin_handles[i].attach(plugin_handles[i + 1].place_work);
     }
 
     char readBuffer[MAX_WORD_LENGTH];
@@ -204,28 +197,6 @@ int pipeline_init(char *pluginNamesRaw[], int queueSize)
         }
     }
     // DEBUGGING
-    for (int i = 0; i < g_pluginCount - 1; i++)
-    {
-        printf("[DEBUG] Attaching %s to %s\n", plugin_handles[i].name, plugin_handles[i + 1].name);
-
-        // Test if the function pointer is valid
-        if (plugin_handles[i + 1].place_work == NULL)
-        {
-            printf("[ERROR] %s place_work function is NULL!\n", plugin_handles[i + 1].name);
-            continue;
-        }
-
-        plugin_handles[i].attach(plugin_handles[i + 1].place_work);
-        printf("[DEBUG] Attachment complete\n");
-    }
-    printf("[DEBUG] Pipeline setup complete. Chain: ");
-    for (int i = 0; i < g_pluginCount; i++)
-    {
-        printf("%s", plugin_handles[i].name);
-        if (i < g_pluginCount - 1)
-            printf(" -> ");
-    }
-    printf("\n");
 
     for (int i = 0; i < g_pluginCount; i++)
     {
