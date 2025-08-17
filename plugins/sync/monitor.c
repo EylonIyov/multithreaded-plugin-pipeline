@@ -33,8 +33,8 @@ void monitor_signal(monitor_t *monitor)
 {
 
     pthread_mutex_lock(&(monitor->mutex));
-    monitor->signaled = 1;
     pthread_cond_signal(&monitor->condition);
+    monitor->signaled = 1;
     pthread_mutex_unlock(&(monitor->mutex));
 }
 
@@ -66,7 +66,7 @@ int monitor_wait(monitor_t *monitor)
             pthread_mutex_unlock(&(monitor->mutex));
             return -1;
         }
-        }
+    }
     if (pthread_mutex_unlock(&(monitor->mutex)) != 0)
     {
         return -1;

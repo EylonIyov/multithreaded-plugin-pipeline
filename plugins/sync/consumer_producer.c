@@ -87,14 +87,25 @@ const char *consumer_producer_put(consumer_producer_t *queue, const char *item)
     }
 
     pthread_mutex_lock(&queue->queue_lock);
-    // printf("[DEBUG] Amount of items in queue before adding: %d", queue->count);
 
     while (queue->count >= queue->capacity)
     {
+        if (queue->finished_monitor.signaled == 1)
+        {
+            pthread_mutex_unlock(&queue->queue_lock);
+            return "Queue finished while waiting";
+        }
+
         monitor_reset(&queue->not_full_monitor);
         pthread_mutex_unlock(&queue->queue_lock);
         monitor_wait(&queue->not_full_monitor);
         pthread_mutex_lock(&queue->queue_lock);
+    }
+
+    if (queue->finished_monitor.signaled == 1)
+    {
+        pthread_mutex_unlock(&queue->queue_lock);
+        return "Queue finished while waiting";
     }
 
     queue->items[queue->tail] = strdup(item);
@@ -108,7 +119,6 @@ const char *consumer_producer_put(consumer_producer_t *queue, const char *item)
     queue->count++;
 
     monitor_signal(&queue->not_empty_monitor);
-    // printf("[DEBUG] Amount of items in queue after adding: %d", queue->count);
 
     pthread_mutex_unlock(&queue->queue_lock);
 
@@ -119,7 +129,7 @@ char *consumer_producer_get(consumer_producer_t *queue)
 {
     if (queue == NULL)
     {
-        return "Error: NULL Queue pointer";
+        return NULL;
     }
 
     pthread_mutex_lock(&queue->queue_lock);
