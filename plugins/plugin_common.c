@@ -29,15 +29,17 @@ void *plugin_consumer_thread(void *arg)
 
         if (strcmp(input, "<END>") == 0)
         {
-            consumer_producer_signal_finished(context->queue);
-
             if (context->next_place_work != NULL)
             {
-                context->next_place_work(input);
+                const char *error = context->next_place_work("<END>");
+                if (error != NULL)
+                {
+                    log_error(context, error);
+                }
             }
+            consumer_producer_signal_finished(context->queue);
             context->finished = 1;
-            free(input);
-
+            free(input); // Free the original <END> input
             break;
         }
 
