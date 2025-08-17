@@ -87,6 +87,7 @@ const char *consumer_producer_put(consumer_producer_t *queue, const char *item)
     }
 
     pthread_mutex_lock(&queue->queue_lock);
+    // printf("[DEBUG] Amount of items in queue before adding: %d", queue->count);
 
     while (queue->count >= queue->capacity)
     {
@@ -107,6 +108,7 @@ const char *consumer_producer_put(consumer_producer_t *queue, const char *item)
     queue->count++;
 
     monitor_signal(&queue->not_empty_monitor);
+    // printf("[DEBUG] Amount of items in queue after adding: %d", queue->count);
 
     pthread_mutex_unlock(&queue->queue_lock);
 

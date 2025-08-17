@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
     // Verify first argument is a valid positive number
     if (argc < 3)
     {
-        fprintf(stderr, "Error:");
+        fprintf(stderr, "Error:\n");
         printf("Usage: ./analyzer <queue_size> <plugin1> <plugin2> ... <pluginN>");
         return -1;
     }
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     int queueSize = verifyInteger(argv[1]);
     if (queueSize <= 0)
     {
-        fprintf(stderr, "Error:");
+        fprintf(stderr, "Error:\n");
         printf("Usage: ./analyzer <queue_size> <plugin1> <plugin2> ... <pluginN>");
         return -1;
     }
@@ -56,6 +56,8 @@ int main(int argc, char *argv[])
 
     if (pipeline_init(&argv[2], queueSize) != 0)
     {
+        fprintf(stderr, "Error:\n");
+        printf("Pipeline init failed");
         return -1;
     }
 
@@ -64,7 +66,8 @@ int main(int argc, char *argv[])
         const char *error = plugin_handles[i].init(queueSize);
         if (error)
         {
-            fprintf(stderr, "[ERROR] Plugin %s init failed: %s\n", plugin_handles[i].name, error);
+            fprintf(stderr, "Error:\n");
+            printf("[%s] %s", plugin_handles[i].name, error);
             pipeline_destroy();
             return -1;
         }
