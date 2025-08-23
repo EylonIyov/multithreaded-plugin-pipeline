@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#define SECOND 500000u
+#define DELAY 100000u
 
 const char *plugin_transform(const char *input)
 {
@@ -16,7 +16,7 @@ const char *plugin_transform(const char *input)
     fflush(stdout);
     for (int i = 0; output[i]; i++)
     {
-        usleep(SECOND);
+        usleep(DELAY);
         putchar(output[i]);
         fflush(stdout);
     }

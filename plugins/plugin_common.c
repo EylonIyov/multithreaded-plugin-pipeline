@@ -148,7 +148,6 @@ const char *plugin_fini(void)
     consumer_producer_destroy(plugin_context.queue);
     free(plugin_context.queue);
     plugin_context.queue = NULL;
-    printf("[DEBUG] Plugin %s shutdown \n", plugin_context.name);
     return NULL;
 }
 

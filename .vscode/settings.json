@@ -10,6 +10,7 @@
         "pthread.h": "c",
         "monitor.h": "c",
         "plugin_common.h": "c",
-        "limits": "c"
+        "limits": "c",
+        "string.h": "c"
     }
 }

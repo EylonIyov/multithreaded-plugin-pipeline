@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <dlfcn.h>
 #include <string.h>
+#include <unistd.h>
 #include "plugins/plugin_common.h"
 
 #define MAX_WORD_LENGTH 1024
@@ -212,7 +213,6 @@ int pipeline_init(char *pluginNamesRaw[], int queueSize)
 
 char **transformPluginName(char **pluginNames, int count)
 {
-
     char **pluginNamesTransformed = malloc(count * sizeof(char *));
     if (!pluginNamesTransformed)
     {
@@ -231,7 +231,18 @@ char **transformPluginName(char **pluginNames, int count)
             free(pluginNamesTransformed);
             return NULL;
         }
-        sprintf(pluginNamesTransformed[i], "./%s.so", pluginNames[i]);
+        sprintf(pluginNamesTransformed[i], "%s.so", pluginNames[i]);
+
+        if (access(pluginNamesTransformed[i], F_OK) != 0)
+        {
+            snprintf(pluginNamesTransformed[i], len, "./%s.so", pluginNames[i]);
+        }
+
+        // If still not found, try output/ directory (for when run from project root)
+        if (access(pluginNamesTransformed[i], F_OK) != 0)
+        {
+            snprintf(pluginNamesTransformed[i], len, "output/%s.so", pluginNames[i]);
+        }
     }
 
     return pluginNamesTransformed;

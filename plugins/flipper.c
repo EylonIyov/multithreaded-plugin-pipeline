@@ -24,5 +24,5 @@ __attribute__((visibility("default")))
 const char *
 plugin_init(int queue_size)
 {
-    return common_plugin_init(plugin_transform, "flipper", queue_size);
+    return common_plugin_init(plugin_transform, "<flipper>", queue_size);
 }

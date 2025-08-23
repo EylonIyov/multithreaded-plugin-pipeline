@@ -23,6 +23,10 @@ echo -e "item1\nitem2\nitem3\n<END>" | ./analyzer 1 logger rotator
 
 
 echo -e "\nSingle plugin (no inter-plugin blocking):"
-echo -e "single1\nsingle2\nsingle3\nsingle4\n<END>" | ./analyzer 1 uppercaser typewriter logger
+echo -e "single1\nsingle2\nsingle3\nsingle4\n<END>" | ./analyzer 1 typewriter uppercaser flipper logger
+
+echo "=== Testing edge case <end> ==="
+echo -e "single1\nsingle2\nsingle3\n<end>\nsingle4\n<END>" | ./analyzer 3 typewriter uppercaser logger
+
 
 cd ../
