@@ -2,12 +2,11 @@
 #include <stdio.h>
 #include <dlfcn.h>
 #include <string.h>
-#include <unistd.h>
 #include "plugins/plugin_common.h"
 
 #define MAX_WORD_LENGTH 1024
 
-// definitions for the struct saving each plugins info
+// Function Defenition
 typedef const char *(*plugin_init_func_t)(int queue_size);
 typedef const char *(*plugin_fini_func_t)(void);
 typedef const char *(*plugin_place_work_func_t)(const char *work);
@@ -38,28 +37,27 @@ char **transformPluginName(char **pluginNames, int count);
 
 int main(int argc, char *argv[])
 {
-    // Verify first argument is a valid positive number
+    // Verify the argument count is valid
     if (argc < 3)
     {
-        fprintf(stderr, "Error:\n");
+        fprintf(stderr, "Error: Too few arguments \n");
         printf("Usage: ./analyzer <queue_size> <plugin1> <plugin2> ... <pluginN>");
-        return -1;
+        return 1;
     }
-
+    // Verify first argument is a valid positive number
     int queueSize = verifyInteger(argv[1]);
     if (queueSize <= 0)
     {
-        fprintf(stderr, "Error:\n");
+        fprintf(stderr, "Error: <queue_size> must be a positive integer \n");
         printf("Usage: ./analyzer <queue_size> <plugin1> <plugin2> ... <pluginN>");
-        return -1;
+        return 1;
     }
     g_pluginCount = argc - 2;
 
     if (pipeline_init(&argv[2], queueSize) != 0)
     {
-        fprintf(stderr, "Error:\n");
-        printf("Pipeline init failed");
-        return -1;
+        fprintf(stderr, "Error: Pipeline initialization failed\n");
+        return 2;
     }
 
     for (int i = 0; i < g_pluginCount; i++)
@@ -67,23 +65,27 @@ int main(int argc, char *argv[])
         const char *error = plugin_handles[i].init(queueSize);
         if (error)
         {
-            fprintf(stderr, "Error:\n");
-            printf("[%s] %s", plugin_handles[i].name, error);
+            fprintf(stderr, "Error: [%s] %s\n", plugin_handles[i].name, error);
             pipeline_destroy();
-            return -1;
+            return 2;
         }
     }
+    // Set up the pipeline by attaching each plugin to the next
     for (int i = 0; i < g_pluginCount - 1; i++)
     {
         plugin_handles[i].attach(plugin_handles[i + 1].place_work);
     }
-
+    // Main input loop, read from stdin
     char readBuffer[MAX_WORD_LENGTH];
     while (fgets(readBuffer, sizeof(readBuffer), stdin))
     {
         long sizeOfBuffer = strlen(readBuffer);
 
         if (sizeOfBuffer > 0 && readBuffer[sizeOfBuffer - 1] == '\n')
+        {
+            readBuffer[sizeOfBuffer - 1] = '\0';
+        }
+        if (sizeOfBuffer > 2 && readBuffer[sizeOfBuffer - 1] == ' ' && readBuffer[sizeOfBuffer - 2] != ' ')
         {
             readBuffer[sizeOfBuffer - 1] = '\0';
         }
@@ -102,13 +104,32 @@ int main(int argc, char *argv[])
     }
     for (int i = 0; i < g_pluginCount; i++)
     {
-        char const *returnCode = plugin_handles[i].wait_finished();
-        if (returnCode != NULL)
+        if (plugin_handles[i].wait_finished)
         {
-            fprintf(stderr, "[ERROR] Plugin %s failed to finish properly\n", plugin_handles[i].name);
+            const char *wait_error = plugin_handles[i].wait_finished();
+            if (wait_error != NULL)
+            {
+                fprintf(stderr, "Warning: Plugin '%s' wait_finished failed: %s\n",
+                        plugin_handles[i].name, wait_error);
+            }
+        }
+    }
+
+    for (int i = 0; i < g_pluginCount; i++)
+    {
+        if (plugin_handles[i].fini)
+        {
+            const char *fini_error = plugin_handles[i].fini();
+            if (fini_error != NULL)
+            {
+                fprintf(stderr, "Error: Plugin '%s' cleanup failed: %s\n",
+                        plugin_handles[i].name, fini_error);
+            }
         }
     }
     pipeline_destroy();
+
+    printf("Pipeline shutdown complete\n");
     return 0;
 }
 
@@ -197,10 +218,9 @@ int pipeline_init(char *pluginNamesRaw[], int queueSize)
             }
             free(pluginNames);
             free(plugin_handles);
-            return -1;
+            return 2;
         }
     }
-    // DEBUGGING
 
     for (int i = 0; i < g_pluginCount; i++)
     {
@@ -220,7 +240,7 @@ char **transformPluginName(char **pluginNames, int count)
     }
     for (int i = 0; i < count; i++)
     {
-        size_t len = strlen("./") + strlen(pluginNames[i]) + strlen(".so") + 1;
+        size_t len = strlen("output/") + strlen(pluginNames[i]) + strlen(".so") + 1;
         pluginNamesTransformed[i] = malloc(len);
         if (!pluginNamesTransformed[i])
         {
@@ -231,18 +251,7 @@ char **transformPluginName(char **pluginNames, int count)
             free(pluginNamesTransformed);
             return NULL;
         }
-        sprintf(pluginNamesTransformed[i], "%s.so", pluginNames[i]);
-
-        if (access(pluginNamesTransformed[i], F_OK) != 0)
-        {
-            snprintf(pluginNamesTransformed[i], len, "./%s.so", pluginNames[i]);
-        }
-
-        // If still not found, try output/ directory (for when run from project root)
-        if (access(pluginNamesTransformed[i], F_OK) != 0)
-        {
-            snprintf(pluginNamesTransformed[i], len, "output/%s.so", pluginNames[i]);
-        }
+        sprintf(pluginNamesTransformed[i], "%s%s.so", "output/", pluginNames[i]);
     }
 
     return pluginNamesTransformed;
@@ -257,21 +266,24 @@ int pipeline_destroy(void)
 
     for (int i = 0; i < g_pluginCount; i++)
     {
-        if (plugin_handles[i].fini)
-        {
-            plugin_handles[i].fini();
-        }
-        if (plugin_handles[i].handle)
-        {
-            dlclose(plugin_handles[i].handle);
-        }
         if (plugin_handles[i].name)
         {
             free(plugin_handles[i].name);
+            plugin_handles[i].name = NULL;
+        }
+
+        if (plugin_handles[i].handle)
+        {
+            if (dlclose(plugin_handles[i].handle) != 0)
+            {
+                fprintf(stderr, "Warning: Failed to unload plugin %d: %s\n", i, dlerror());
+            }
+            plugin_handles[i].handle = NULL;
         }
     }
     free(plugin_handles);
     plugin_handles = NULL;
     g_pluginCount = 0;
+
     return 0;
 }

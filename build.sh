@@ -34,3 +34,5 @@ print_status "Building analyzer"
 gcc -ldl main.c -o output/analyzer
 
 cd output
+
+pwd

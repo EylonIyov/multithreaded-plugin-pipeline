@@ -1,4 +1,13 @@
-Final Project - Modular Pipeline System.pd
+Final Project - Modular Pipeline System.pdf
 .DS_Store
-/output
+output/
 test1.sh
+test2.sh
+eylon1.sh
+eylon2.sh
+eylon3.sh
+eylon4.sh
+
+.devcontainer/
+.vscode/
+
