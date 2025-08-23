@@ -23,7 +23,7 @@ print_error()
 ./build.sh
 
 EXPECTED="[logger] HELLO" 
-ACTUAL=$(echo -e "hello\n<END>" | ./output/analyzer 10 uppercaser logger | grep "[logger]") 
+ACTUAL=$(echo -e "hello\n<END>" | ./output/analyzer 10 uppercaser logger | grep "\[logger\]") 
  
 if [ "$ACTUAL" == "$EXPECTED" ]; then 
     print_status "Test uppercaser + logger: PASS" 
