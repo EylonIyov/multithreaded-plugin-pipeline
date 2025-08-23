@@ -62,10 +62,6 @@ const char *consumer_producer_init(consumer_producer_t *queue, int capacity)
 
 void consumer_producer_destroy(consumer_producer_t *queue)
 {
-    if (queue == NULL)
-    {
-        return;
-    }
     monitor_destroy(&queue->finished_monitor);
     monitor_destroy(&queue->not_full_monitor);
     monitor_destroy(&queue->not_empty_monitor);
