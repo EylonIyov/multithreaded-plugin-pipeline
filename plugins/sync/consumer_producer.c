@@ -62,6 +62,10 @@ const char *consumer_producer_init(consumer_producer_t *queue, int capacity)
 
 void consumer_producer_destroy(consumer_producer_t *queue)
 {
+    if (!queue)
+    {
+        return;
+    }
     monitor_destroy(&queue->finished_monitor);
     monitor_destroy(&queue->not_full_monitor);
     monitor_destroy(&queue->not_empty_monitor);
@@ -127,7 +131,7 @@ const char *consumer_producer_put(consumer_producer_t *queue, const char *item)
 
 char *consumer_producer_get(consumer_producer_t *queue)
 {
-    if (queue == NULL)
+    if (!queue)
     {
         return NULL;
     }
@@ -174,7 +178,7 @@ void consumer_producer_signal_finished(consumer_producer_t *queue)
 
 int consumer_producer_wait_finished(consumer_producer_t *queue)
 {
-    if (queue == NULL)
+    if (!queue)
     {
         return -1;
     }
