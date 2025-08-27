@@ -4,7 +4,7 @@
 #include <string.h>
 #include "plugins/plugin_common.h"
 
-#define MAX_WORD_LENGTH 1024
+#define MAX_WORD_LENGTH 1026
 
 // Function Defenition
 typedef const char *(*plugin_init_func_t)(int queue_size);
@@ -34,6 +34,7 @@ int pipeline_destroy(void);
 int verifyInteger(const char *str);
 int pipeline_init(char *pluginNamesRaw[], int queueSize);
 char **transformPluginName(char **pluginNames, int count);
+void print_Usage(const char *execLocation);
 
 int main(int argc, char *argv[])
 {
@@ -41,23 +42,31 @@ int main(int argc, char *argv[])
     if (argc < 3)
     {
         fprintf(stderr, "Error: Too few arguments \n");
-        printf("Usage: ./analyzer <queue_size> <plugin1> <plugin2> ... <pluginN>");
-        return 1;
+        print_Usage(argv[0]);
+        exit(1);
     }
     // Verify first argument is a valid positive number
     int queueSize = verifyInteger(argv[1]);
     if (queueSize <= 0)
     {
         fprintf(stderr, "Error: <queue_size> must be a positive integer \n");
-        printf("Usage: ./analyzer <queue_size> <plugin1> <plugin2> ... <pluginN>");
-        return 1;
+        print_Usage(argv[0]);
+        exit(1);
     }
     g_pluginCount = argc - 2;
+    int init_result = pipeline_init(&argv[2], queueSize);
 
-    if (pipeline_init(&argv[2], queueSize) != 0)
+    if (init_result == 1)
+    {
+        fprintf(stderr, "Error: Failed to load plugin shared objects\n");
+        print_Usage(argv[0]);
+        exit(1);
+    }
+    else if (init_result != 0)
     {
         fprintf(stderr, "Error: Pipeline initialization failed\n");
-        return 2;
+        print_Usage(argv[0]);
+        exit(1);
     }
 
     for (int i = 0; i < g_pluginCount; i++)
@@ -67,7 +76,7 @@ int main(int argc, char *argv[])
         {
             fprintf(stderr, "Error: [%s] %s\n", plugin_handles[i].name, error);
             pipeline_destroy();
-            return 2;
+            exit(2);
         }
     }
     // Set up the pipeline by attaching each plugin to the next
@@ -85,15 +94,11 @@ int main(int argc, char *argv[])
         {
             readBuffer[sizeOfBuffer - 1] = '\0';
         }
-        if (sizeOfBuffer > 2 && readBuffer[sizeOfBuffer - 1] == ' ' && readBuffer[sizeOfBuffer - 2] != ' ')
-        {
-            readBuffer[sizeOfBuffer - 1] = '\0';
-        }
 
         const char *error = plugin_handles[0].place_work(readBuffer);
         if (error != NULL)
         {
-            fprintf(stderr, "[ERROR] Failed to place work in pipeline: %s\n", error);
+            fprintf(stderr, "Error: Failed to place work in pipeline: %s\n", error);
             break;
         }
 
@@ -130,7 +135,7 @@ int main(int argc, char *argv[])
     pipeline_destroy();
 
     printf("Pipeline shutdown complete\n");
-    return 0;
+    exit(0);
 }
 
 // returns queueSize if its an integer, otherwise -1
@@ -155,15 +160,14 @@ int pipeline_init(char *pluginNamesRaw[], int queueSize)
 {
     if (g_pluginCount <= 0)
     {
-        fprintf(stderr, "Error: ");
-        printf("Needs at least one plugin to start pipeline");
+        fprintf(stderr, "Error: Needs at least one plugin to start pipeline");
         return -1;
     }
 
     plugin_handles = malloc(g_pluginCount * sizeof(plugin_handle_t));
     if (!plugin_handles)
     {
-        fprintf(stderr, "[ERROR] Allocating space for plugin_handles failed");
+        fprintf(stderr, "Error: Allocating space for plugin_handles failed");
         return -1;
     }
 
@@ -174,7 +178,7 @@ int pipeline_init(char *pluginNamesRaw[], int queueSize)
         plugin_handles[i].handle = dlopen(pluginNames[i], RTLD_NOW | RTLD_LOCAL);
         if (!plugin_handles[i].handle)
         {
-            fprintf(stderr, "[ERROR] Failed to load plugin %s: %s\n", pluginNames[i], dlerror());
+            fprintf(stderr, "Error: Failed to load plugin %s: %s\n", pluginNames[i], dlerror());
             for (int j = 0; j < i; j++)
             {
                 dlclose(plugin_handles[j].handle);
@@ -188,7 +192,7 @@ int pipeline_init(char *pluginNamesRaw[], int queueSize)
             }
             free(pluginNames);
             free(plugin_handles);
-            return -1;
+            return 1;
         }
 
         plugin_handles[i].name = malloc(strlen(pluginNamesRaw[i]) + 1);
@@ -204,7 +208,7 @@ int pipeline_init(char *pluginNamesRaw[], int queueSize)
 
         if (!plugin_handles[i].init || !plugin_handles[i].fini || !plugin_handles[i].place_work || !plugin_handles[i].attach || !plugin_handles[i].wait_finished)
         {
-            fprintf(stderr, "[ERROR] Plugin %s missing required functions\n", pluginNamesRaw[i]);
+            fprintf(stderr, "Error: Plugin %s missing required functions\n", pluginNamesRaw[i]);
             dlclose(plugin_handles[i].handle);
             free(plugin_handles[i].name);
             for (int j = 0; j < i; j++)
@@ -218,7 +222,7 @@ int pipeline_init(char *pluginNamesRaw[], int queueSize)
             }
             free(pluginNames);
             free(plugin_handles);
-            return 2;
+            return 1;
         }
     }
 
@@ -276,7 +280,7 @@ int pipeline_destroy(void)
         {
             if (dlclose(plugin_handles[i].handle) != 0)
             {
-                fprintf(stderr, "Warning: Failed to unload plugin %d: %s\n", i, dlerror());
+                fprintf(stderr, "Error: Failed to unload plugin %d: %s\n", i, dlerror());
             }
             plugin_handles[i].handle = NULL;
         }
@@ -286,4 +290,25 @@ int pipeline_destroy(void)
     g_pluginCount = 0;
 
     return 0;
+}
+
+void print_Usage(const char *execLocation)
+{
+    printf("Usage: %s <queue_size> <plugin1> <plugin2> ... <pluginN>\n", execLocation);
+    printf("Arguments:\n");
+    printf("  queue_size  Maximum number of items in each plugin's queue\n");
+    printf("  plugin1..N  Names of plugins to load (without .so extension)\n");
+    printf("\n");
+    printf("Available plugins:\n");
+    printf("  logger      - Logs all strings that pass through\n");
+    printf("  typewriter  - Simulates typewriter effect with delays\n");
+    printf("  uppercaser  - Converts strings to uppercase\n");
+    printf("  rotator     - Move every character to the right. Last character moves to the beginning.\n");
+    printf("  flipper     - Reverses the order of characters\n");
+    printf("  expander    - Expands each character with spaces\n");
+    printf("\n");
+    printf("Example:\n");
+    printf("  %s 20 uppercaser rotator logger\n", execLocation);
+    printf("  echo 'hello' | %s 20 uppercaser rotator logger\n", execLocation);
+    printf("  echo '<END>' | %s 20 uppercaser rotator logger\n", execLocation);
 }
