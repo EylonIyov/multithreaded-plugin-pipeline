@@ -1,4 +1,5 @@
 #include "plugin_common.h"
+#include "plugin_sdk.h"
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>

@@ -1,4 +1,5 @@
 #include "plugin_common.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -157,6 +158,10 @@ const char *plugin_place_work(const char *str)
     {
         return "Plugin not initialized yet";
     }
+    if (!str)
+    {
+        return "Can't insert NULL to queue";
+    }
     return consumer_producer_put(plugin_context.queue, str);
 }
 
@@ -173,5 +178,12 @@ plugin_wait_finished(void)
     {
         return "Plugin not initialized yet";
     }
-    return consumer_producer_wait_finished(plugin_context.queue) == 0 ? NULL : "Waiting failed"; // Return an error message if waiting for finish failed
+    int result = consumer_producer_wait_finished(plugin_context.queue);
+
+    if (result != 0)
+    {
+        return "Failed to wait for consumer-producer to finish";
+    }
+
+    return NULL; // Success
 }
