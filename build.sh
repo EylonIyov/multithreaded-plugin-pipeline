@@ -1,3 +1,5 @@
+set -e
+
 # Colors for output 
 RED='\033[0;31m' 
 GREEN='\033[0;32m' 
@@ -29,7 +31,10 @@ for plugin_name in logger uppercaser rotator flipper expander typewriter; do
     }    
 done
 
-print_status "Building analyzer"
+print_status "Building piepline"
 
 gcc -ldl main.c -o output/analyzer
+
+print_status "built pipeline successfully"
+
 
