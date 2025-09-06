@@ -7,12 +7,22 @@
 const char *plugin_transform(const char *input)
 {
     int length = strlen(input);
-    char *output = malloc((length * 2 + 1) * sizeof(char));
+    if (length == 0)
+    {
+        char *output = malloc(1);
+        if (output)
+            output[0] = '\0';
+        return output;
+    }
+
+    int output_size = length + (length - 1) + 1;
+    char *output = malloc(output_size);
 
     if (!output)
         return NULL;
 
-    for (int i = 0, j = 0; i < length; i++)
+    int j = 0;
+    for (int i = 0; i < length; i++)
     {
         output[j++] = input[i];
         if (i != length - 1)
@@ -20,7 +30,7 @@ const char *plugin_transform(const char *input)
             output[j++] = ' ';
         }
     }
-    output[length * 2] = '\0';
+    output[j] = '\0';
     return output;
 }
 

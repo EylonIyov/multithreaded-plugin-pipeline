@@ -22,6 +22,9 @@ print_error()
     echo -e "${RED}[ERROR]${NC} $1" 
 }
 
+print_status "Building pipeline"
+
+mkdir -p output
 
 for plugin_name in logger uppercaser rotator flipper expander typewriter; do 
     print_status "Building plugin: $plugin_name" 
@@ -31,10 +34,10 @@ for plugin_name in logger uppercaser rotator flipper expander typewriter; do
     }    
 done
 
-print_status "Building piepline"
+
 
 gcc -ldl main.c -o output/analyzer
 
-print_status "built pipeline successfully"
+print_status "Pipeline built successfully"
 
 

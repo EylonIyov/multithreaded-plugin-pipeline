@@ -9,7 +9,7 @@ const char *plugin_transform(const char *input)
         return NULL;
 
     int stringLength = strlen(output);
-    if (stringLength == 1)
+    if (stringLength <= 1)
     {
         return output;
     }
