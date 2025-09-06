@@ -180,7 +180,7 @@ else
 fi
 
 print_status "Test #14: All Plugins Test"
-ACTUAL=$(echo -e "comprehensive\n<END>" | ./output/analyzer 20 uppercaser rotator flipper expander logger | grep "\[logger\]")
+ACTUAL=$(echo -e "comprehensive\n<END>" | ./output/analyzer 20 uppercaser rotator flipper expander typewriter logger | grep "\[logger\]")
 EXPECTED="[logger] V I S N E H E R P M O C E"
 if [ "$ACTUAL" == "$EXPECTED" ]; then
     print_status "All Plugins Test: PASS"
@@ -211,7 +211,7 @@ else
 fi
 
 print_status "Test #18: Queue Size 1 Stress Test"
-ACTUAL=$(echo -e "item1\nitem2\nitem3\nitem4\nitem5\n<END>" | ./output/analyzer 1 uppercaser rotator logger | grep "\[logger\]" | tail -1)
+ACTUAL=$(echo -e "item1\nitem2\nitem3\nitem4\nitem5\n<END>" | ./output/analyzer 1 uppercaser rotator typewriter logger | grep "\[logger\]" | tail -1)
 EXPECTED="[logger] 5ITEM"
 if [ "$ACTUAL" == "$EXPECTED" ]; then
     print_status "Queue Size 1 Stress Test: PASS"
