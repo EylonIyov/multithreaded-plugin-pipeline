@@ -1,1 +1,3 @@
 
+Developed a multi-threaded plugin-based pipeline processing system in C that dynamically loads shared object libraries, implements producer-consumer patterns with thread-safe queues, and chains text transformation plugins (uppercase, rotation, reversal) using POSIX threads and synchronization primitives.
+
